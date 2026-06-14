@@ -1,0 +1,212 @@
+# ============================================================================
+#  Auto-Apply Engine — User Profile
+#  The ONE file that configures everything. Copy to config/profile.yaml and edit
+#  (or run `npm run init` to generate it interactively), then `npm run build-rules`.
+# ============================================================================
+#
+# TRUTH-ONLY CONTRACT: the engine never invents facts. If a form asks for
+# something this file doesn't answer, the field is left blank and (if it's a
+# required gate) the job is skipped — never fabricated. So fill this out
+# honestly and completely. Every answer the engine types comes from here.
+#
+# The example below is a fictional US-based financial analyst. Replace ALL of it.
+# After any edit, run `npm run build-rules` to regenerate config/rules.json.
+# ----------------------------------------------------------------------------
+
+# --- Who you are (typed verbatim into application forms) ---------------------
+identity:
+  first_name: Jane
+  last_name: Doe
+  full_name: Jane Doe                     # legal name used on applications
+  preferred_name: Jane                    # what you go by (optional; defaults to first_name)
+  email: jane.doe@example.com             # the inbox you apply with — ATS verification
+                                          #   codes are sent here, so it must be one you read
+  phone: 555-123-4567
+  phone_country: United States            # country for intl phone widgets
+  linkedin: https://www.linkedin.com/in/janedoe
+  # Mailing address
+  street_address_line1: 123 Main St
+  street_address_line2: Apt 4             # unit/apt/suite — leave "" if none
+  city: Austin
+  state: Texas
+  state_abbr: TX
+  zip: "78701"
+  country: United States
+  pronouns: She/Her                       # optional; "" to leave blank
+
+# --- Current / most recent job (for "current employer / title" fields) ------
+current:
+  company: Acme Corporation
+  title: Financial Analyst
+
+# --- Your base resume (tailored lightly per job, then rendered to PDF) -------
+resume:
+  # Path (relative to the project root) to your base resume in Markdown or HTML.
+  # The agent copies it per application, retunes the summary/lead bullet to the JD,
+  # truth-checks it, then `node src/html-to-pdf.mjs` renders the PDF that gets uploaded.
+  base: applications/_resumes/resume-base.md
+
+# --- Compensation & availability --------------------------------------------
+logistics:
+  # Free text typed into salary / "compensation expectations" fields.
+  salary_text: "Open, with a minimum base of $90,000"
+  # Free text for "notice period / when can you start".
+  notice_text: "Available immediately, with two weeks notice if currently employed"
+  start_date_text: "As soon as possible"
+  open_to_relocation: true                # -> "open to relocation?" = Yes
+  open_to_remote: true                    # -> "open to remote?" = Yes
+  open_to_onsite: true                    # -> "willing to work onsite/hybrid?" = Yes
+  needs_relocation_assistance: false      # -> "need relocation assistance?" = No
+
+# --- Work authorization & sponsorship ---------------------------------------
+# This block drives every visa / sponsorship / citizenship question. Be exact.
+work_authorization:
+  citizenship: United States              # your country of citizenship
+  authorized_to_work_us: true             # legally authorized to work in the US now?
+  is_us_citizen_or_pr: true               # US citizen OR green-card / permanent resident?
+  currently_in_us: true                   # do you currently reside in the US?
+  needs_sponsorship: false                # do you need visa sponsorship now OR in the future?
+  visa_type: ""                           # only if needs_sponsorship, e.g. "H-1B Transfer"
+  # When needs_sponsorship is true, roles that REQUIRE you be authorized "without
+  # sponsorship" are a futile apply. Skip them automatically and log the reason:
+  skip_no_sponsorship_roles: true
+
+# --- Education (your highest degree) ----------------------------------------
+education:
+  # One of: High School | Associate's | Bachelor's | Master's | Doctorate
+  highest_level: Bachelor's
+  degree: BA Economics                    # free text for "most recent degree" fields
+  school: University of Texas at Austin
+  graduation_year: "2016"
+
+# --- Experience & skills ----------------------------------------------------
+experience:
+  years_total: "8"                        # total relevant years (for "how many years" questions)
+  # Skill honesty matters. The engine will happily claim 'expert' / 'proficient'
+  # skills, but NEVER upgrades a 'working' skill — and answers "No" to questions
+  # like "do you have 4+ years of professional <working-skill>?".
+  skills_expert: [Excel, Financial Modeling, "FP&A", Forecasting, Budgeting]
+  skills_proficient: [Power BI]
+  skills_working: [SQL, Python, Tableau]  # familiar-only; never presented as expert
+  certifications: []                      # e.g. ["SAP S/4HANA Certified"]
+  # Things you do NOT have — answered truthfully (No / decline) on forms:
+  has_cpa: false
+  has_cfa: false
+  has_management_experience: false
+
+# --- Demographics / EEO (all OPTIONAL; blank = "decline to answer") ----------
+# These only fill voluntary equal-opportunity sections. Set any field to "" to
+# decline that question. The engine never asserts a demographic you leave blank.
+demographics:
+  gender: Woman                           # Man | Woman | "" (decline)
+  transgender: false
+  # Race: Asian | White | Black or African American | Hispanic or Latino |
+  #       Native American | Pacific Islander | Two or More Races | "" (decline)
+  race: White
+  hispanic_latino: false
+  # "not a veteran" | "protected veteran" | "" (decline)
+  veteran_status: "not a veteran"
+  disability: false                       # true if you have a disability; "" to decline
+  english_fluency: Native                 # Native | Fluent | Professional | ""
+
+# --- What jobs to find (drives discovery + queue filtering) -----------------
+search:
+  # A role matches if its TITLE contains ANY of these (case-insensitive substrings).
+  target_roles:
+    - financial analyst
+    - "fp&a"
+    - finance analyst
+    - business analyst
+    - data analyst
+    - reporting analyst
+    - budget analyst
+    - pricing analyst
+  # Drop a role if its title contains ANY of these (even if it matched above).
+  # Good place for off-target titles that share keywords (sales, engineering, etc.).
+  exclude_titles_containing:
+    - accountant
+    - account executive
+    - account manager
+    - sales
+    - recruiter
+    - engineer
+    - software
+  # Drop roles that are too senior (Director/VP/Principal/Head/Chief/Lead/Sr Manager).
+  exclude_too_senior: true
+  # Locations you'll accept — city names, states, regions. A located role is kept
+  # only if its location text contains one of these (or is US-remote, below).
+  target_locations:
+    - Austin
+    - Texas
+    - "Remote US"
+  # Accept any US-remote role regardless of city.
+  accept_remote_us: true
+  # Locations to treat as out-of-scope (dropped unless they also match a
+  # target_location). Defaults below are non-US regions; trim if you want them.
+  exclude_locations:
+    - canada
+    - united kingdom
+    - "\\buk\\b"
+    - europe
+    - emea
+    - apac
+    - india
+    - australia
+    - singapore
+    - germany
+    - france
+    - ireland
+  # Job-description text filters: drop a posting whose description contains ANY of
+  # these phrases. Default set screens out roles that won't sponsor — harmless to
+  # keep even if you don't need sponsorship.
+  exclude_text:
+    - without sponsorship
+    - "no sponsorship"
+    - not able to sponsor
+    - cannot sponsor
+    - will not sponsor
+    - must be authorized to work in the us without
+
+# --- Essays / long-form answers (reused across applications) ----------------
+# The engine fills open-ended free-text questions from these. Write each in your
+# own voice and keep it truthful — these are claims an employer may ask about.
+# Map each essay to the question phrasings that should trigger it via essay_keywords.
+essays:
+  why: >-
+    I'm a financial analyst with eight years in FP&A, forecasting, and budgeting.
+    This role fits how I work best: building models from the ground up and turning
+    the results into clear recommendations for decision-makers. I'd bring a focus
+    on accuracy and practical insight.
+  improve: >-
+    My team was pricing customizations by hand, which took days. I built an
+    Excel-based estimation tool that priced options in real time, cutting
+    turnaround from days to instant and making the step easier for everyone.
+  collab: >-
+    I improved an intercompany reporting process that surfaced prior-month errors
+    late. I focused on the process rather than blame, set up a clear month-end
+    check, and we ended up with more reliable closes and a better relationship.
+  general: >-
+    In eight years in FP&A I've built forecasts and scenario models, run
+    Budget-to-Actual reporting with variance under 3 percent, and supported
+    executive decisions with clear analysis. I turn numbers into recommendations
+    leaders can act on.
+
+# Map an essay key (above) to the question phrasings that should select it.
+# Values are case-insensitive regex fragments matched against the question text.
+# Order matters: the first essay whose keywords match wins. Put the most specific
+# essays first and a catch-all ("general") last.
+essay_keywords:
+  why: ["why (do|are|would) you", "why .*(this company|work here|join)", "what (interests|excites) you"]
+  improve: ["smarter", "faster", "better way", "improve.*process", "automat"]
+  collab: ["difficult collaboration", "conflict", "disagree", "challenging.*(collaborat|team)"]
+  general: ["tell us about", "describe (a|your)", "walk us through", "experience (with|in)"]
+
+# --- Voice guide (tone for any free-writing; truth still governed above) -----
+voice:
+  # Hard "don't sound like AI" rules applied to generated cover letters / answers.
+  banned_words: [leverage, utilize, spearheaded, passionate, synergy, robust,
+                 seamless, streamline, delve, "proven track record",
+                 "results-driven", "detail-oriented", "team player",
+                 "fast-paced environment", "I am excited to"]
+  no_em_dashes: true
+  no_emoji: true

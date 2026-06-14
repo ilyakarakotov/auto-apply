@@ -1,0 +1,8 @@
+{
+  "_readme": "Company ATS tokens to sweep. This is a DATA file, not personal config — grow it freely. Each value is the company's slug on that ATS (the part of its careers-page URL). Add yours and delete these. Greenhouse/Lever/Ashby use lowercase slugs; SmartRecruiters uses the CapitalizedCompanyId; Workable uses the subdomain.",
+  "greenhouse": ["stripe", "databricks", "discord", "instacart", "gitlab"],
+  "lever": ["netflix", "plaid", "ramp"],
+  "ashby": ["openai", "ramp", "notion"],
+  "smartrecruiters": ["Visa", "Square"],
+  "workable": ["deel"]
+}

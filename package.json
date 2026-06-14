@@ -1,0 +1,29 @@
+{
+  "name": "auto-apply-engine",
+  "version": "1.0.0",
+  "description": "A configurable, open-source job auto-apply pipeline: discover -> plan -> fill -> submit, driven by a single profile.yaml. Built to be driven by Claude Code + Playwright.",
+  "type": "module",
+  "license": "MIT",
+  "bin": {
+    "auto-apply-init": "bin/init.mjs"
+  },
+  "scripts": {
+    "init": "node bin/init.mjs",
+    "build-rules": "node src/build-rules.mjs",
+    "discover": "node src/discover.mjs > /tmp/cands.json && python3 src/build-queue.py",
+    "discover-daily": "bash scripts/discover-daily.sh",
+    "plan": "node src/plan-apply.mjs",
+    "filler": "node src/make-filler.mjs",
+    "pdf": "node src/html-to-pdf.mjs",
+    "next": "node src/next-jobs.mjs",
+    "browser": "bash scripts/vps-up.sh"
+  },
+  "dependencies": {
+    "imapflow": "^1.4.0",
+    "playwright": "^1.50.0",
+    "yaml": "^2.6.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
