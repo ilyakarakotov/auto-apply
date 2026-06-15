@@ -15,6 +15,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import YAML from 'yaml';
+import { parseObjects } from './lib/csv.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const args = process.argv.slice(2);
@@ -27,31 +28,19 @@ const reverse = args.includes('--reverse');
 // already-touched ids/urls from tracker (dedupe safety net)
 // Only SUBMITTED and CLOSED-NOT-SUBMITTED rows count — skipped/paused/gated
 // jobs should be re-processable when reset to ready in queue.yaml.
+// tracker.csv columns: date,company,role,url,ats,resume_file,status,screenshot,notes,followup_status
+// role/notes may contain commas/quotes, so parse it as real CSV (lib/csv.mjs) keyed by header
+// instead of by fragile field positions.
 const done = new Set();
 try {
-  const tr = fs.readFileSync(path.join(ROOT, 'tracker.csv'), 'utf8');
-  for (const line of tr.trim().split('\n')) {
-    const fields = line.split(',');
-    // CSV: date,company,role,url,ats,resume_path,status,file,notes
-    // role can contain commas, so find url and status by pattern
-    const urlMatch = line.match(/,((https?:[^,]+)),/);
-    const statusMatch = line.match(new RegExp(urlMatch
-      ? `,${urlMatch[1]},[^,]*,[^,]*,([^,]+),`
-      : ''), 'i');
-    if (!urlMatch) continue;
-    const url = urlMatch[1].replace(/\/$/, '');
-    // Parse status from position: ...url,ats,resume_path,status,file,notes
-    // We need to find the ats field position. Known ATS values: greenhouse, lever, ashby, etc.
-    const idx = line.indexOf(urlMatch[1]);
-    const afterUrl = line.slice(idx + urlMatch[1].length); // ,<ats>,<resume_path>,<status>,...
-    const parts = afterUrl.split(',');
-    // parts[0] may be empty (comma before url), parts[1]=ats, parts[2]=resume_path, parts[3]=status
-    const status = parts[3];
-    if (status === 'SUBMITTED' || status === 'CLOSED-NOT-SUBMITTED') {
-      done.add(url);
-      const idMatch = url.match(/(\d{6,})$/);
-      if (idMatch) done.add(idMatch[1]);
-    }
+  const rows = parseObjects(fs.readFileSync(path.join(ROOT, 'tracker.csv'), 'utf8'));
+  for (const r of rows) {
+    if (r.status !== 'SUBMITTED' && r.status !== 'CLOSED-NOT-SUBMITTED') continue;
+    const url = (r.url || '').replace(/\/$/, '');
+    if (!url) continue;
+    done.add(url);
+    const idMatch = url.match(/(\d{6,})$/);
+    if (idMatch) done.add(idMatch[1]);
   }
 } catch (e) {}
 

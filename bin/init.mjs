@@ -32,7 +32,9 @@ const exists = (p) => fs.existsSync(p);
 
 const examplePath = P('config/profile.example.yaml');
 if (!exists(examplePath)) { console.error('config/profile.example.yaml missing — run from the project root.'); process.exit(1); }
-if (exists(P('config/profile.yaml')) && !FORCE && !YES) {
+// Require explicit --force to overwrite an existing profile, even with --yes — otherwise a
+// non-interactive/CI `init --yes` would silently wipe a completed profile back to example defaults.
+if (exists(P('config/profile.yaml')) && !FORCE) {
   console.error('config/profile.yaml already exists. Re-run with --force to overwrite, or edit it directly.');
   process.exit(1);
 }
@@ -146,6 +148,19 @@ if (!exists(P('config/companies.json'))) {
   console.log('  wrote config/companies.json (starter — add the companies you want to sweep)');
 }
 
+// ---- starter resume + applications/ scaffolding (so the first apply never fails on a missing file) ----
+fs.mkdirSync(P('applications/_resumes'), { recursive: true });
+if (!exists(P('applications/_resumes/resume-base.md')) && exists(P('config/resume-base.example.md'))) {
+  fs.copyFileSync(P('config/resume-base.example.md'), P('applications/_resumes/resume-base.md'));
+  console.log('  wrote applications/_resumes/resume-base.md (starter resume — replace with your own)');
+}
+
+// ---- login-walled / manual-only list (jobs the engine must NEVER auto-submit; optional) ----
+if (!exists(P('config/manual-apply.yaml')) && exists(P('config/manual-apply.example.yaml'))) {
+  fs.copyFileSync(P('config/manual-apply.example.yaml'), P('config/manual-apply.yaml'));
+  console.log('  wrote config/manual-apply.yaml (from example)');
+}
+
 // ---- tracker.csv header ----
 if (!exists(P('tracker.csv'))) {
   fs.writeFileSync(P('tracker.csv'), 'date,company,role,url,ats,resume_file,status,screenshot,notes,followup_status\n');
@@ -156,8 +171,7 @@ if (!exists(P('tracker.csv'))) {
 if (exists(P('CLAUDE.template.md'))) {
   const pr = doc.toJSON();
   const human = (a) => (a || []).join(', ');
-  const locSummary = [...(pr.search.target_locations || [])].join(', ') +
-    (pr.search.accept_remote_us !== false ? '' : '');
+  const locSummary = [...(pr.search.target_locations || [])].join(', ');
   const sponsorshipRule = pr.work_authorization.needs_sponsorship
     ? `You DO need visa sponsorship${pr.work_authorization.visa_type ? ` (${pr.work_authorization.visa_type})` : ''}. ` +
       `Answer "authorized to work WITHOUT sponsorship?" truthfully **No** — plan-apply flags these as a gate and ` +
@@ -171,14 +185,15 @@ if (exists(P('CLAUDE.template.md'))) {
     .replaceAll('{{sponsorship_rule}}', sponsorshipRule)
     .replaceAll('{{target_roles}}', human(pr.search.target_roles))
     .replaceAll('{{exclude_titles}}', human(pr.search.exclude_titles_containing))
-    .replaceAll('{{resume_base}}', pr.resume.base)
-    .replaceAll('{{email}}', pr.identity.email);
+    .replaceAll('{{resume_base}}', pr.resume.base);
   fs.writeFileSync(P('CLAUDE.md'), claude);
   console.log('  wrote CLAUDE.md (tailored)');
 }
 
 console.log('\n  Done. Next steps:');
 console.log('   1. Open config/profile.yaml and complete it honestly (address, skills, demographics, essays).');
-console.log('   2. Re-run `npm run build-rules` after any profile edit.');
-console.log('   3. Put your base resume at the path you gave, then `bash scripts/discover-daily.sh` to fill the queue.');
-console.log('   4. Point Claude Code at this directory and let it work the queue per CLAUDE.md.\n');
+console.log('   2. Replace applications/_resumes/resume-base.md with your real resume (Markdown or HTML).');
+console.log('   3. Re-run `npm run build-rules` after any profile edit.');
+console.log('   4. Run `npm run doctor` to verify your toolchain + config.');
+console.log('   5. Start a browser (`npm run browser`), then `npm run discover-daily` to fill the queue.');
+console.log('   6. Open Claude Code in this directory and run /apply (or run scripts/daily-orchestrate.sh).\n');

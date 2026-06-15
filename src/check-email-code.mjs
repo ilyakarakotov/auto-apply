@@ -66,15 +66,17 @@ export function extractCode(raw) {
     if (STRICT.test(m[0])) cands.push({code: m[0], idx: m.index});
   }
   if (!cands.length) return null;
-  // Prefer the candidate nearest a verification keyword — the real code sits next to
-  // "verification code" / "security code"; falls back to the first if no keyword is present.
+  // A genuine verification email always NAMES the code ("verification"/"security"/"code"/
+  // "confirm"). With no such keyword anywhere, an 8-char token is just an English word
+  // (e.g. "applying") or a reference id — not a code. Don't return a false positive.
   const kw = [];
   let k;
   while ((k = KEYWORD.exec(text)) !== null) kw.push(k.index);
-  if (kw.length) {
-    const dist = i => Math.min(...kw.map(p => Math.abs(p - i)));
-    cands.sort((a, b) => dist(a.idx) - dist(b.idx));
-  }
+  if (!kw.length) return null;
+  // Prefer the candidate nearest a verification keyword — the real code sits next to
+  // "verification code" / "security code".
+  const dist = i => Math.min(...kw.map(p => Math.abs(p - i)));
+  cands.sort((a, b) => dist(a.idx) - dist(b.idx));
   return cands[0].code;
 }
 
@@ -140,7 +142,7 @@ if (path.resolve(process.argv[1] || '') === fileURLToPath(import.meta.url)) {
     host: creds.host || 'imap.gmail.com',
     port: creds.port || 993,
     secure: true,
-    auth: {user: creds.user, pass: creds.password},
+    auth: {user: creds.user || creds.email, pass: creds.password || creds.pass},
     logger: false,
   });
 

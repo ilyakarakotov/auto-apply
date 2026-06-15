@@ -1,0 +1,6 @@
+{
+  "_readme": "OPTIONAL large list of UNPROVEN company ATS slugs, swept in rotating batches by src/discover.mjs (UNIVERSE_BATCH env, default 1500/ATS) and fully by `npm run sweep-universe`. Companies that yield an in-scope role get PROMOTED into config/companies.json automatically; nothing here needs to be hand-curated. To enable, copy this file to config/companies-universe.json (or grow it with `node src/sync-jobhive.mjs` to pull live board slugs, or `node src/harvest-tokens.mjs --extract <saved-search-results-file>`); leave it absent to skip universe rotation entirely. Slugs are the company id in its careers-page URL: greenhouse/lever lowercase, ashby lowercase.",
+  "greenhouse": ["airbnb", "coinbase", "robinhood", "asana", "benchling"],
+  "lever": ["brex", "figma", "scaleai"],
+  "ashby": ["linear", "vercel", "mistral"]
+}

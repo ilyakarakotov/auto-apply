@@ -1,0 +1,40 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node src/discover.mjs *)",
+      "Bash(node src/plan-apply.mjs *)",
+      "Bash(node src/make-filler.mjs *)",
+      "Bash(node src/next-jobs.mjs *)",
+      "Bash(node src/mark-status.mjs *)",
+      "Bash(node src/html-to-pdf.mjs *)",
+      "Bash(node src/harvest-tokens.mjs *)",
+      "Bash(node src/sync-jobhive.mjs *)",
+      "Bash(node src/check-email-code.mjs *)",
+      "Bash(node src/get-code-by-subject.mjs *)",
+      "Bash(node src/retry-email-run.mjs *)",
+      "Bash(node src/build-rules.mjs *)",
+      "Bash(python3 src/build-queue.py)",
+      "Bash(python3 src/discover-jobhive.py *)",
+      "Bash(python3 src/scan-followups.py *)",
+      "Bash(bash scripts/discover-daily.sh)",
+      "Bash(bash scripts/vps-up.sh)",
+      "Bash(bash scripts/*.sh)",
+      "Bash(npx playwright-cli *)",
+      "Bash(playwright-cli --version)",
+      "Bash(playwright-cli --help)",
+      "Bash(playwright-cli attach *)",
+      "Bash(playwright-cli goto *)",
+      "Bash(playwright-cli click *)",
+      "Bash(playwright-cli upload *)",
+      "Bash(playwright-cli screenshot *)",
+      "Bash(playwright-cli snapshot *)",
+      "Bash(playwright-cli eval *)",
+      "Bash(playwright-cli run-code *)",
+      "Bash(playwright-cli tab-list *)",
+      "Bash(curl -s --max-time 3 http://localhost:9222/json/version)",
+      "Bash(curl -s --max-time 2 http://localhost:9222/json/version)",
+      "Bash(curl -s --max-time 4 http://localhost:9222/json/version)",
+      "Bash(curl -s --max-time 4 http://localhost:9222/json)"
+    ]
+  }
+}

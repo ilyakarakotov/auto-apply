@@ -60,6 +60,9 @@ playwright-cli eval "$(cat src/probe-form.js)" --raw
 #    - EMAIL-CODE gate (appears post-submit): node src/check-email-code.mjs <company> --wait --code-only
 #      -> code printed: fill the verification input, submit, CONFIRM success (step 8) -> mark SUBMITTED.
 #         NEVER mark SUBMITTED on an unconfirmed code.
+#      -> wrong/ambiguous code on a shared inbox: node src/get-code-by-subject.mjs "<company display name>"
+#         --wait --code-only (matches by email SUBJECT, not just newest). Stale/expired code on retry:
+#         node src/retry-email-run.mjs "<company>" --wait --code-only (only returns a FRESH code).
 #      -> empty after 60s: mark-status SKIPPED-EMAIL-GATE -> next job
 # 8. ok:true -> node src/mark-status.mjs --url <url> --status FILLED-PENDING-SUBMIT (dedup guard)
 #    -> screenshot (audit only, do NOT read it back) -> click Submit -> confirm: URL /confirmation
@@ -85,10 +88,16 @@ bash scripts/discover-daily.sh    # live sweep of config/companies.json + build-
   batches (`UNIVERSE_BATCH`, default 1500/ATS) and companies that yield an in-scope role get
   PROMOTED into companies.json. It's not required to get started.
 - Grow the lists from the web: search `site:job-boards.greenhouse.io "<your role>" (<your city> OR
-  remote)` (and lever/ashby variants), then add the slugs to companies.json.
+  remote)` (and lever/ashby variants), save the results page, then
+  `node src/harvest-tokens.mjs --extract <file>` (or `--names <file>` for a company-name list) to
+  merge the slugs into companies.json.
+- jobhive (optional, wider net): `node src/sync-jobhive.mjs` grows companies-universe.json from the
+  public jobhive slug lists; `python3 src/discover-jobhive.py && CANDS=/tmp/cands-jobhive.json
+  python3 src/build-queue.py` queries jobhive's pre-scraped dataset (needs `duckdb`) — the best way
+  to surface SmartRecruiters/Workable roles. `bash scripts/sweep-universe.sh` does a full universe pass.
 - `build-queue.py` PRESERVES existing queue entries + their statuses; it only appends new jobs.
 - Login-walled boards (Workday tenants, iCIMS, Phenom, amazon.jobs) can't be auto-submitted —
-  skip them before tailoring.
+  append them to `config/manual-apply.yaml` (never auto-submit) and skip before tailoring.
 
 ## Token discipline (the rules that keep runs cheap)
 - **Never** dump a full `snapshot` and **never** read a screenshot back into context. The probe
@@ -106,13 +115,19 @@ bash scripts/discover-daily.sh    # live sweep of config/companies.json + build-
 - New question with a reusable truthful answer -> `config/qa-bank.json` (exact text + `src` note).
 - New ANSWER that should change everywhere (a skill, a demographic, an essay) -> edit
   `config/profile.yaml`, then `npm run build-rules` to regenerate `config/rules.json`.
-- New ATS widget/flow quirk -> fix `src/filler.template.js` or `src/probe-form.js`.
+- New ATS widget/flow quirk -> fix `src/filler.template.js` or `src/probe-form.js`, and append ONE
+  timeless, person-agnostic rule line to `LEARNINGS.md` (the engine's prose memory of ATS quirks).
 - Never edit `config/rules.json` by hand (it's generated) or `/tmp/fill-run.js` (it's generated).
 
 ## Browser
-On a headless box, bring up the stack with `bash scripts/vps-up.sh` (Xvfb + headed Chrome on CDP
-9222 + optional noVNC). Attach: `playwright-cli attach --cdp http://localhost:9222`. Re-attach if
-the session drops. REUSE ONE TAB (goto the next job's URL) instead of opening new tabs.
+LOCAL (default): `bash scripts/start-chrome.sh` launches real headed Chrome on CDP 9222 with a
+persistent profile (macOS or local Linux). On a headless box (VPS/CI) use `bash scripts/vps-up.sh`
+instead (Xvfb + headed Chrome on CDP 9222 + optional noVNC). Either way, attach:
+`playwright-cli attach --cdp http://localhost:9222`. Re-attach if the session drops. REUSE ONE TAB
+(goto the next job's URL) instead of opening new tabs. DEFAULT to ONE browser session; only for a
+very large ready pool (100+) split into isolated workers via `bash scripts/worker-browser.sh <N>`
+(each gets CDP 9222+N, profile .auto-apply-chrome-wN, session `-s=wN`, filler /tmp/fill-run-wN.js;
+partition jobs by company; guard shared-file writes with /tmp/auto-apply-* flock locks).
 **Anti-bot hardening is automatic — do not disable it.** Chrome launches headed (real
 google-chrome-stable, persistent profile) with `--disable-blink-features=AutomationControlled`,
 and the generated filler patches `navigator.webdriver` per page. NEVER add `--headless` or
@@ -122,10 +137,12 @@ Phone-country widget (intl-tel-input): pick from the list, never type into it.
 
 ## Inputs / outputs
 Read: `config/profile.yaml` (ground truth), `config/rules.json` (generated standard answers),
-`config/queue.yaml`.
+`config/queue.yaml`, and `LEARNINGS.md` (universal ATS quirks — read ONCE at cycle start, don't
+re-read mid-run).
 Write: `applications/<co>/` (resume, screenshots), `tracker.csv` (one row per job:
 `date,company,role,url,ats,resume_file,status,screenshot,notes,followup_status` — leave the
-trailing `followup_status` empty), queue status updates.
+trailing `followup_status` empty; it's owned/written later by `src/scan-followups.py`), queue
+status updates.
 Statuses: SUBMITTED | FILLED-PENDING-SUBMIT | SKIPPED-POOR-FIT | SKIPPED-NO-SPONSORSHIP |
 skipped-needs-login | SKIPPED-CAPTCHA | SKIPPED-EMAIL-GATE | CLOSED-NOT-SUBMITTED.
 Set queue status ONLY via `node src/mark-status.mjs --url <u> --status <S>` (never hand-edit

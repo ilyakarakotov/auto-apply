@@ -20,7 +20,7 @@ catch { console.error('config/profile.yaml not found — copy config/profile.exa
 const S = profile.search || {};
 const reList = (arr, fallback = 'a^') => new RegExp('(' + ((arr && arr.length ? arr : [fallback]).join('|')) + ')', 'i');
 
-const TITLE_RE = reList(S.target_roles, 'analyst'); // a role's title must match one of these
+const TITLE_RE = reList(S.target_roles, '.'); // a role's title must match one of these ('.' = any, when none configured)
 const EXCLUDE_TITLE = reList(S.exclude_titles_containing); // ...and none of these
 const TOO_SENIOR = /(director|vice president|\bvp\b|principal|\bhead\b|chief|\bsvp\b|\bevp\b|partner|senior manager|sr\.? manager|\blead\b)/i;
 const useSeniorFilter = S.exclude_too_senior !== false;
@@ -204,9 +204,9 @@ try {
   for (const ats of ['greenhouse', 'lever', 'ashby']) {
     COMPANIES[ats] = COMPANIES[ats] || [];
     for (const co of hit[ats]) if (uniSets[ats].has(co) && !COMPANIES[ats].includes(co)) { COMPANIES[ats].push(co); promoted++; }
-    COMPANIES[ats].sort();
+    COMPANIES[ats].sort((a, b) => a.localeCompare(b)); // same comparator as harvest-tokens.mjs
   }
-  if (promoted) fs.writeFileSync(path.join(ROOT, 'config/companies.json'), JSON.stringify(COMPANIES, null, 1));
+  if (promoted) fs.writeFileSync(path.join(ROOT, 'config/companies.json'), JSON.stringify(COMPANIES, null, 1) + '\n');
   fs.writeFileSync(cursorPath, JSON.stringify(cursor));
   if (promoted) console.error(`promoted ${promoted} universe companies into companies.json`);
 } catch (e) { console.error('promote/cursor write failed: ' + e.message); }

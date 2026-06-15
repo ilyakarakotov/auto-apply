@@ -1,0 +1,28 @@
+# Application queue, MERGED by src/build-queue.py from src/discover.mjs sweeps.
+# Existing entries keep their status across re-sweeps; only new jobs are appended.
+# ats: greenhouse|lever|ashby|smartrecruiters|workable. scope: local|remote.
+
+- company: Globex
+  role: "Financial Analyst"
+  url: https://job-boards.greenhouse.io/globex/jobs/0000000
+  ats: greenhouse
+  location: "Austin, TX"
+  scope: local
+  id: "0000000"
+  status: ready
+- company: Initech
+  role: "FP&A Analyst"
+  url: https://jobs.lever.co/initech/00000000-0000-0000-0000-000000000000
+  ats: lever
+  location: "Remote (US)"
+  scope: remote
+  id: "00000000-0000-0000-0000-000000000000"
+  status: ready
+- company: Hooli
+  role: "Business Analyst"
+  url: https://jobs.ashbyhq.com/hooli/00000000-0000-0000-0000-000000000000
+  ats: ashby
+  location: "Remote, United States"
+  scope: remote
+  id: "00000000-0000-0000-0000-000000000000"
+  status: ready

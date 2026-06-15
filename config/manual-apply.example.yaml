@@ -1,0 +1,43 @@
+# ============================================================================
+#  Login-walled / manual-only jobs — the agent must NOT auto-submit these.
+# ============================================================================
+# Copy to config/manual-apply.yaml. During discovery the agent APPENDS roles it
+# found at sponsors but cannot complete unattended — because the ATS needs an
+# account, a human CAPTCHA, or an SSO/login wall before you can even see the
+# form. Instead of skipping them silently, it parks them here so you can apply
+# by hand if you want. Nothing here is ever submitted automatically.
+#
+# Typical login-walled ATSes you'll see land here:
+#   workday  — *.myworkdayjobs.com tenants (each company has its own login)
+#   icims    — *.icims.com (account-gated apply)
+#   phenom   — phenom-hosted career sites (e.g. many *.careers domains)
+#   amazon   — amazon.jobs (Amazon account required)
+#   other    — anything else behind a login/CAPTCHA wall
+#
+# Entry shape (companies below are fictional examples — replace or clear them):
+#   - company: ""
+#     role: ""
+#     url: ""
+#     ats: workday | icims | phenom | amazon | other
+#     reason: "needs account / login to submit"
+#     found: 2026-06-14            # YYYY-MM-DD the agent parked it here
+
+roles:
+  - company: Globex
+    role: Financial Analyst
+    url: https://globex.wd1.myworkdayjobs.com/careers/job/0000000
+    ats: workday
+    reason: "Workday tenant requires an account to submit"
+    found: 2026-06-14
+  - company: Initech
+    role: FP&A Analyst
+    url: https://careers-initech.icims.com/jobs/00000/financial-analyst/job
+    ats: icims
+    reason: "iCIMS apply is gated behind account login"
+    found: 2026-06-14
+  - company: Umbrella
+    role: Business Analyst
+    url: https://www.amazon.jobs/en/jobs/0000000/business-analyst
+    ats: amazon
+    reason: "amazon.jobs needs an Amazon account / human CAPTCHA"
+    found: 2026-06-14
